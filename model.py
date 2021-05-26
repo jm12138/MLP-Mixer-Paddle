@@ -16,11 +16,13 @@ class MlpBlock(nn.Layer):
 
 
 class MixerBlock(nn.Layer):
-    def __init__(self, token_dim, channels_dim, tokens_mlp_dim, channels_mlp_dim):
+    def __init__(self, token_dim, channels_dim,
+                 tokens_mlp_dim, channels_mlp_dim,
+                 norm_layer=nn.LayerNorm, epsilon=1e-6):
         super().__init__()
-        self.norm_0 = nn.LayerNorm(channels_dim)
+        self.norm_0 = norm_layer(channels_dim, epsilon=epsilon)
         self.token_mixing = MlpBlock(token_dim, tokens_mlp_dim)
-        self.norm_1 = nn.LayerNorm(channels_dim)
+        self.norm_1 = norm_layer(channels_dim, epsilon=epsilon)
         self.channel_mixing = MlpBlock(channels_dim, channels_mlp_dim)
 
     def forward(self, x):
@@ -36,28 +38,47 @@ class MixerBlock(nn.Layer):
 
 
 class MlpMixer(nn.Layer):
-    def __init__(self, img_size=(224, 224), patch_size=(16, 16), 
-                num_classes=1000, num_blocks=12, hidden_dim=768, 
-                tokens_mlp_dim=384, channels_mlp_dim=3072):
+    def __init__(self, img_size=(224, 224), patch_size=(16, 16),
+                 num_blocks=12, hidden_dim=768,
+                 tokens_mlp_dim=384, channels_mlp_dim=3072,
+                 norm_layer=nn.LayerNorm, epsilon=1e-6,
+                 class_dim=1000):
         super().__init__()
+        self.class_dim = class_dim
+
         self.stem = nn.Conv2D(
             3, hidden_dim, kernel_size=patch_size, stride=patch_size)
-        self.blocks = nn.LayerList()
-        for _ in range(num_blocks):
-            block = MixerBlock(
-                (img_size[0] // patch_size[0]) ** 2, hidden_dim, tokens_mlp_dim, channels_mlp_dim)
-            self.blocks.append(block)
-        self.pre_head_layer_norm = nn.LayerNorm(hidden_dim)
-        self.head = nn.Linear(hidden_dim, num_classes)
+
+        blocks = [
+            MixerBlock(
+                (img_size[0] // patch_size[0]) ** 2,
+                hidden_dim,
+                tokens_mlp_dim,
+                channels_mlp_dim,
+                norm_layer,
+                epsilon
+            ) for _ in range(num_blocks)
+        ]
+        self.blocks = nn.Sequential(*blocks)
+
+        self.pre_head_layer_norm = norm_layer(hidden_dim, epsilon=epsilon)
+
+        if class_dim > 0:
+            self.head = nn.Linear(hidden_dim, class_dim)
 
     def forward(self, inputs):
         x = self.stem(inputs)
+
         x = x.transpose((0, 2, 3, 1))
         x = x.flatten(1, 2)
-        for block in self.blocks:
-            x = block(x)
-        x = x.mean(axis=1)
-        x = self.head(x)
+
+        x = self.blocks(x)
+        x = self.pre_head_layer_norm(x)
+
+        if self.class_dim > 0:
+            x = x.mean(axis=1)
+            x = self.head(x)
+
         return x
 
 
@@ -111,4 +132,3 @@ def mixer_l(pretrained=False, **kwargs):
         path = paddle.utils.download.get_weights_path_from_url('https://bj.bcebos.com/v1/ai-studio-online/ca74ababd4834e34b089c1485989738de4fdf6a97be645ed81b6e39449c5815c?responseContentDisposition=attachment%3B%20filename%3Dimagenet1k_Mixer-L_16.pdparams')
         model.set_dict(paddle.load(path))
     return model
- 
