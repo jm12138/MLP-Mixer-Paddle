@@ -1,4 +1,4 @@
-from ppim import mixer_b
+from model import mixer_b
 
 import os
 import cv2
