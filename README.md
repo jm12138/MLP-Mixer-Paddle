@@ -2,7 +2,9 @@
 使用 Paddle 复现 MLP-Mixer 模型
 
 # 精度表现（Cifar10）
-
+```
+{'acc_top1': 0.9618, 'acc_top5': 0.9993}
+```
 
 # AIStudio 项目
 [MLP is all you need ?](https://aistudio.baidu.com/aistudio/projectdetail/1924298)
