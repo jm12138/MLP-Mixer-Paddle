@@ -15,8 +15,6 @@ from paddle.callbacks import EarlyStopping, VisualDL, ModelCheckpoint
 train_transforms = T.Compose([
     T.Resize(224),
     T.RandomHorizontalFlip(),
-    T.RandomVerticalFlip(),
-    T.ColorJitter(),
     T.ToTensor(),
     T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
@@ -49,5 +47,5 @@ earlystopping = EarlyStopping(monitor='acc_top1',
 vdl = VisualDL('log')
 
 # 模型验证
-acc = model.fit(train_dataset, val_dataset, batch_size=16, num_workers=0, epochs=3, save_dir='save', callbacks=[checkpoint, earlystopping, vdl])
+acc = model.fit(train_dataset, val_dataset, batch_size=16, num_workers=0, epochs=2, save_dir='save', callbacks=[checkpoint, earlystopping, vdl])
 print(acc)
