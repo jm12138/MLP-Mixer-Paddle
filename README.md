@@ -3,7 +3,7 @@
 
 # 精度表现（Cifar10）
 ```
-{'acc_top1': 0.9618, 'acc_top5': 0.9993}
+{'acc_top1': 0.9622, 'acc_top5': 0.9995}
 ```
 
 # AIStudio 项目
