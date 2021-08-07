@@ -5,7 +5,7 @@
 
 
 # AIStudio 项目
-
+[MLP is all you need ?](https://aistudio.baidu.com/aistudio/projectdetail/1924298)
 
 # 模型微调训练（Cifar10 base mixer-b on ImageNet-1k）
 ```shell
